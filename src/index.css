@@ -1,0 +1,158 @@
+/* ===== Reset global ===== */
+* {
+  box-sizing: border-box; /* el padding y el borde NO agrandan el elemento */
+}
+/* ===== Encabezado ===== */
+header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+header p {
+  margin-top: 8px;
+  color: #666; /* gris para que sea secundario al título */
+}
+/* ===== Base de la página ===== */
+body {
+  margin: 0;                          /* quita el margen por defecto del navegador */
+  padding: 24px;                      /* aire entre el contenido y los bordes */
+  font-family: system-ui, sans-serif; /* tipografía del sistema */
+  background-color: #f3f4f6;          /* FONDO CLARO (gris muy suave) */
+  color: #1f2937;                     /* color de texto oscuro, buen contraste */
+}
+/* ===== Contenedor centrado tipo tarjeta ===== */
+.app-container {
+  max-width: 600px;                 /* no se estira en pantallas grandes */
+  margin: 40px auto;                /* "auto" a los lados = CENTRADO horizontal */
+  background-color: #ffffff;        /* panel blanco sobre el fondo gris */
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); /* sombra suave */
+}
+h1 {
+  font-size: 28px;
+  margin-bottom: 24px;
+}
+
+/* ===== Lista de tareas (el <ul>) ===== */
+.task-list {
+  list-style: none;       /* quita las viñetas • */
+  padding: 0;             /* quita el sangrado por defecto de las listas */
+  margin: 0;              /* sin margen => se queda PEGADA A LA IZQUIERDA */
+  max-width: 480px;       /* ancho máximo para que no se estire demasiado */
+  display: flex;          /* activa flexbox */
+  flex-direction: column; /* apila las tarjetas en vertical */
+  gap: 12px;              /* separación entre tarjetas */
+}
+
+/* ===== Cada tarjeta (el <li>) ===== */
+.task-card {
+  display: flex;                  /* texto y badge en una fila */
+  align-items: center;           /* los centra verticalmente */
+  justify-content: space-between;/* texto a la izq, badge a la der */
+  gap: 12px;
+  background-color: #ffffff;      /* tarjeta blanca sobre fondo gris */
+  padding: 12px 16px;             /* aire interior: 12px arriba/abajo, 16px lados */
+  border: 1px solid #e5e7eb;      /* borde fino gris */
+  border-radius: 8px;             /* esquinas redondeadas */
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); /* sombra sutil = sensación de relieve */
+  transition: box-shadow 0.2s, transform 0.2s;  /* anima la sombra y el movimiento */
+}
+
+.task-text {
+  font-size: 16px;
+  flex: 1;
+}
+
+/* ===== Badge de prioridad ===== */
+.badge {
+  font-size: 12px;
+  font-weight: 600;          /* seminegrita */
+  padding: 4px 10px;
+  border-radius: 999px;      /* número enorme => forma de píldora */
+  text-transform: capitalize;/* "alta" se muestra como "Alta" */
+}
+
+/* Un color por prioridad (fondo claro + texto oscuro del mismo tono) */
+.badge-baja   { background-color: #dcfce7; color: #166534; } /* verde */
+.badge-normal { background-color: #fef9c3; color: #854d0e; } /* amarillo */
+.badge-alta   { background-color: #fee2e2; color: #991b1b; } /* rojo */
+/* Resaltar al pasar el cursor por encima */
+.task-card:hover {
+  transform: translateY(-2px);                /* la tarjeta "se levanta" 2px */
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);  /* sombra más marcada */
+}
+
+/* Borde izquierdo de color según la prioridad */
+.task-card-baja   { border-left: 4px solid #16a34a; } /* verde */
+.task-card-normal { border-left: 4px solid #ca8a04; } /* amarillo/ámbar */
+.task-card-alta   { border-left: 4px solid #dc2626; } /* rojo */
+/* ===== Barra para agregar (input + selector + botón) ===== */
+.task-input {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+.task-input input {
+  flex: 1;                    /* el input ocupa el espacio sobrante */
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 14px;
+}
+.task-input select {
+  padding: 10px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 14px;
+  background-color: #ffffff;
+}
+.task-input button {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 8px;
+  background-color: #2563eb;  /* azul */
+  color: #ffffff;
+  font-weight: 600;
+  cursor: pointer;
+}
+.task-input button:hover {
+  background-color: #1d4ed8;
+}
+
+/* ===== Botón eliminar dentro de cada tarjeta ===== */
+.delete-button {
+  border: none;
+  background-color: #fee2e2;  /* rojo claro */
+  color: #991b1b;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.delete-button:hover {
+  background-color: #fecaca;
+}
+
+/* ===== Tarea completada: texto tachado y gris ===== */
+.completed .task-text {
+  text-decoration: line-through;
+  color: #9ca3af;
+}
+
+/* ===== Mensaje cuando no hay tareas ===== */
+.empty-state {
+  text-align: center;
+  color: #9ca3af;
+  padding: 24px;
+}
+
+/* ===== Footer contador ===== */
+.footer {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+  font-size: 14px;
+  color: #4b5563;
+}
