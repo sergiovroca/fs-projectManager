@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 //import "./App.css"; innecesario de momento.
 import Header from "./components/Header";
 import TaskInput from "./components/TaskInput";
@@ -13,22 +13,28 @@ type Task = {
 };
 
 function App() {
-  // El array de tareas. setTasks es la ÚNICA forma de cambiarlo.
-  const [tasks, setTasks] = useState<Task[]>([
-    { id: 1, text: "Estudiar React", priority: "alta", completed: false },
-    { id: 2, text: "Practicar TypeScript", priority: "normal", completed: false },
-    { id: 3, text: "Entender Estado", priority: "baja", completed: true },
-  ]);
+  // El array de tareas empieza VACÍO: las tareas vienen desde el backend.
+  const [tasks, setTasks] = useState<Task[]>([]);
 
-  // AGREGAR: recibe texto y prioridad (vienen desde TaskInput)
-  const addTask = (text: string, priority: string) => {
-    const newTask: Task = {
-      id: Date.now(),        // número único: los milisegundos de "ahora"
-      text: text,
-      priority: priority,
-      completed: false,      // toda tarea nueva nace pendiente
+  // CARGAR: al iniciar React, pide las tareas guardadas en Postgres.
+  useEffect(() => {
+    const fetchTasks = async () => {
+      const response = await fetch("http://localhost:3000/tasks");
+      const data = await response.json();
+      setTasks(data);
     };
-    setTasks([...tasks, newTask]); // copia las viejas + agrega la nueva al final
+    fetchTasks();
+  }, []);
+
+  // AGREGAR: manda la nueva tarea al backend (POST) y usa la que responde Postgres.
+  const addTask = async (text: string, priority: string) => {
+    const response = await fetch("http://localhost:3000/tasks", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: text, priority: priority }),
+    });
+    const newTask = await response.json();
+    setTasks([...tasks, newTask]); // agrega al final la tarea creada en la base
   };
 
   // ELIMINAR: deja solo las tareas cuyo id NO sea el que se borra

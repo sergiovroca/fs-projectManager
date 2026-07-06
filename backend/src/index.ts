@@ -1,7 +1,19 @@
+require("dotenv/config");
+
 const express = require("express");
+const cors = require("cors");
+const jwt = require("jsonwebtoken");
+
 
 const app= express();
 const PORT = 3000;
+const { PrismaClient } = require("./generated/prisma/client");
+const { PrismaPg } = require("@prisma/adapter-pg");
+
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
+const prisma = new PrismaClient({ adapter });
+
+app.use(cors());
 app.use(express.json());
 type Task={
     id: number;
@@ -19,12 +31,63 @@ app.get("/", (req: any, res:any)=>{
     res.send("Backend is working!");
 });
 
-app.get("/tasks", (req: any, res:any)=>{
-    res.json(tasks);
+app.post("/login", (req: any, res: any) => {
+    const { email, password } = req.body || {};
+
+    // Credenciales de prueba (por ahora, escritas a mano)
+    if (email === "admin@test.com" && password === "123456") {
+        const token = jwt.sign(
+            { email: email },        // 1) qué guardamos DENTRO del token (el payload)
+            "secret_key",            // 2) el secreto que FIRMA el token
+            { expiresIn: "1h" }      // 3) caduca en 1 hora
+        );
+
+        return res.json({
+            message: "Login successful",
+            token: token,
+        });
+    }
+
+    // Si no coinciden → 401 (no autorizado)
+    res.status(401).json({
+        message: "Invalid credentials",
+    });
 });
 
-app.post("/tasks", (req: any, res: any) => {
-    const { text, priority } = req.body;
+app.get("/profile", (req: any, res: any) => {
+    // 1) Buscamos el token en el header "Authorization"
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader) {
+        return res.status(401).json({ message: "No token provided" });
+    }
+
+    // 2) El header viene como "Bearer eyJ...". Nos quedamos solo con el token.
+    const token = authHeader.split(" ")[1];
+
+    try {
+        // 3) jwt.verify comprueba la firma Y que no haya caducado
+        const decoded = jwt.verify(token, "secret_key");
+
+        res.json({
+            message: "Protected profile data",
+            user: decoded,
+        });
+    } catch (error) {
+        res.status(401).json({ message: "Invalid token" });
+    }
+});
+
+
+
+app.get("/tasks", async (req: any, res: any) => {
+    const tasksFromDatabase = await prisma.task.findMany();
+    res.json(tasksFromDatabase);
+});
+
+
+app.post("/tasks", async (req: any, res: any) => {
+    const { text, priority } = req.body || {};
 
     if (!text || text.trim() === "") {
         return res.status(400).json({
@@ -32,62 +95,47 @@ app.post("/tasks", (req: any, res: any) => {
         });
     }
 
-    const newTask: Task = {
-        id: Date.now(),
-        text: text.trim(),
-        completed: false,
-        priority: priority || "normal"
-    };
+    const newTask = await prisma.task.create({
+        data: {
+            text: text.trim(),
+            priority: priority || "normal",
+            completed: false
+        }
+    });
 
-    tasks.push(newTask);
     res.status(201).json(newTask);
 });
 
-app.put("/tasks/:id", (req: any, res: any) => {
+app.put("/tasks/:id", async (req: any, res: any) => {
     const id = Number(req.params.id);
-    const { text, completed, priority } = req.body;
+    const { text, completed, priority } = req.body || {};
 
-    const task = tasks.find((task) => task.id === id);
-
-    if (!task) {
-        return res.status(404).json({
-            message: "Task not found"
+    try {
+        const updatedTask = await prisma.task.update({
+            where: { id: id },
+            data: { text, completed, priority },
         });
+        res.json(updatedTask);
+    } catch (error) {
+        res.status(404).json({ message: "Task not found" });
     }
-
-
-    if (text !== undefined) {
-        task.text = text;
-    }
-    if (completed !== undefined) {
-        task.completed = completed;
-    }
-    if (priority !== undefined) {
-        task.priority = priority;
-    }
-
-    res.json(task);
 });
 
 
-app.delete("/tasks/:id", (req:any, res:any)=>{
-    const id =Number(req.params.id);
 
-    const taskExist = tasks.some((task)=> task.id ===id);
-    if(!taskExist){
-        return res.status(404).json({
-            message: "Task not found"
+app.delete("/tasks/:id", async (req: any, res: any) => {
+    const id = Number(req.params.id);
+
+    try {
+        await prisma.task.delete({
+            where: { id: id },
         });
+        res.json({ message: "Task deleted successfully" });
+    } catch (error) {
+        res.status(404).json({ message: "Task not found" });
     }
-    const updatedTasks =tasks.filter((task)=> task.id !== id);
-    tasks.length= 0;
-    tasks.push(...updatedTasks);
-
-    res.json({
-        message: "Taak deleted succesfully",
-        tasks: tasks
-    });
 });
+
 
 app.listen(PORT, ()=>{
     console.log(`Server running on port ${PORT}`);
