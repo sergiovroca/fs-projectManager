@@ -29,16 +29,18 @@ El backend necesita un archivo `backend/.env`. Parte de la plantilla incluida:
 cp backend/.env.example backend/.env
 ```
 
-Y completa las dos claves:
+Y completa las claves:
 
 ```
 DATABASE_URL=
 JWT_SECRET=
+PORT=
 ```
 
 - `DATABASE_URL` — conexión a PostgreSQL, con el formato
   `postgresql://USUARIO:CONTRASENA@HOST:PUERTO/BASE?schema=public`
 - `JWT_SECRET` — cadena larga y aleatoria para firmar los tokens de sesión
+- `PORT` — puerto donde escucha la API (opcional; por defecto 3000)
 
 El archivo `.env` no se versiona. En el pipeline de CI/CD estos valores viajan como
 GitHub Secrets, nunca dentro del repositorio.

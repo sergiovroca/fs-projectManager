@@ -7,7 +7,10 @@ const bcrypt = require("bcryptjs"); // AUTH: sirve para hashear y comparar contr
 
 
 const app= express();
-const PORT = 3000;
+// El puerto se lee del entorno (los servicios de despliegue lo asignan);
+// si no está definido, cae en 3000 para desarrollo local.
+const PORT = Number(process.env.PORT) || 3000;
+
 
 // AUTH: el secreto que firma los tokens ahora vive en .env (no en el código).
 // El "|| ..." es un valor de respaldo por si faltara la variable de entorno.
