@@ -22,3 +22,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Material de la maestria (guias, monografia, documentos de clase).
+# Vive fuera del repo: 01_Recursos / 03_Monografia / Modulo 4 ci-cd\Recursos
+*.docx
+*.pdf
+~$*
