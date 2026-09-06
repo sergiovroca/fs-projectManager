@@ -28,3 +28,9 @@ dist-ssr
 *.docx
 *.pdf
 ~$*
+
+# Variables de entorno y secretos - nunca al repositorio.
+# Los valores reales van en backend/.env (local) o en GitHub Secrets (CI/CD).
+.env
+.env.*
+!.env.example
