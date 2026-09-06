@@ -121,39 +121,46 @@ app.post("/login", async (req: any, res: any) => {
     });
 });
 
-app.get("/profile", (req: any, res: any) => {
-    // 1) Buscamos el token en el header "Authorization"
+// AUTH: middleware reutilizable que PROTEGE rutas.
+// Verifica el header "Authorization: Bearer <token>". Si el token es válido,
+// deja pasar (next()); si falta o es inválido, corta con 401.
+function authMiddleware(req: any, res: any, next: any) {
     const authHeader = req.headers.authorization;
-
     if (!authHeader) {
         return res.status(401).json({ message: "No token provided" });
     }
-
-    // 2) El header viene como "Bearer eyJ...". Nos quedamos solo con el token.
+    // El header viene como "Bearer eyJ...". Nos quedamos solo con el token.
     const token = authHeader.split(" ")[1];
-
     try {
-        // 3) jwt.verify comprueba la firma Y que no haya caducado
         const decoded = jwt.verify(token, JWT_SECRET);
-
-        res.json({
-            message: "Protected profile data",
-            user: decoded,
-        });
+        req.user = decoded; // guardamos el usuario del token por si la ruta lo necesita
+        next();             // token válido → continúa hacia la ruta
     } catch (error) {
-        res.status(401).json({ message: "Invalid token" });
+        return res.status(401).json({ message: "Invalid token" });
     }
+}
+
+// AUTH: /profile ahora usa el middleware (misma lógica que antes, sin repetir código).
+app.get("/profile", authMiddleware, (req: any, res: any) => {
+    // El middleware ya verificó el token y dejó el usuario en req.user.
+    res.json({
+        message: "Protected profile data",
+        user: req.user,
+    });
 });
 
 
 
-app.get("/tasks", async (req: any, res: any) => {
+// RUTAS PROTEGIDAS: las cuatro rutas de tareas llevan authMiddleware como
+// segundo argumento. Sin un token válido, el backend responde 401 y no ejecuta
+// el handler. Así solo un usuario autenticado puede leer o modificar tareas.
+app.get("/tasks", authMiddleware, async (req: any, res: any) => {
     const tasksFromDatabase = await prisma.task.findMany();
     res.json(tasksFromDatabase);
 });
 
 
-app.post("/tasks", async (req: any, res: any) => {
+app.post("/tasks", authMiddleware, async (req: any, res: any) => {
     const { text, priority } = req.body || {};
 
     if (!text || text.trim() === "") {
@@ -173,7 +180,7 @@ app.post("/tasks", async (req: any, res: any) => {
     res.status(201).json(newTask);
 });
 
-app.put("/tasks/:id", async (req: any, res: any) => {
+app.put("/tasks/:id", authMiddleware, async (req: any, res: any) => {
     const id = Number(req.params.id);
     const { text, completed, priority } = req.body || {};
 
@@ -190,7 +197,7 @@ app.put("/tasks/:id", async (req: any, res: any) => {
 
 
 
-app.delete("/tasks/:id", async (req: any, res: any) => {
+app.delete("/tasks/:id", authMiddleware, async (req: any, res: any) => {
     const id = Number(req.params.id);
 
     try {

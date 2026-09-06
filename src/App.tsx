@@ -17,24 +17,40 @@ function App() {
   // El array de tareas empieza VACÍO: las tareas vienen desde el backend.
   const [tasks, setTasks] = useState<Task[]>([]);
 
-  // Vista activa: "tareas" (Task Manager) o "cuenta" (registro/login/JWT).
-  const [view, setView] = useState<"tareas" | "cuenta">("tareas");
+  // AUTH: el token vive aquí, en App. Si al iniciar hay uno guardado en
+  // localStorage, ya estamos "logueados"; si no, mostramos la pantalla de login.
+  const [token, setToken] = useState<string>(localStorage.getItem("token") || "");
 
-  // CARGAR: al iniciar React, pide las tareas guardadas en Postgres.
+  // CARGAR: pide las tareas guardadas en Postgres. Solo tiene sentido cuando hay
+  // token, porque /tasks es una ruta PROTEGIDA (sin token responde 401).
+  // Depende de "token": al iniciar sesión, vuelve a ejecutarse y trae las tareas.
   useEffect(() => {
+    if (!token) return; // sin sesión, no pedimos nada
     const fetchTasks = async () => {
-      const response = await fetch("http://localhost:3000/tasks");
+      const response = await fetch("http://localhost:3000/tasks", {
+        headers: { Authorization: `Bearer ${token}` }, // 👈 mandamos el token
+      });
+      // Si el token expiró o es inválido, el backend responde 401 (no un array).
+      // En ese caso cerramos sesión y volvemos a la pantalla de login.
+      if (!response.ok) {
+        localStorage.removeItem("token");
+        setToken("");
+        return;
+      }
       const data = await response.json();
       setTasks(data);
     };
     fetchTasks();
-  }, []);
+  }, [token]);
 
   // AGREGAR: manda la nueva tarea al backend (POST) y usa la que responde Postgres.
   const addTask = async (text: string, priority: string) => {
     const response = await fetch("http://localhost:3000/tasks", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`, // 👈 ruta protegida: requiere token
+      },
       body: JSON.stringify({ text: text, priority: priority }),
     });
     const newTask = await response.json();
@@ -46,6 +62,7 @@ function App() {
   const deleteTask = async (id: number) => {
     await fetch(`http://localhost:3000/tasks/${id}`, {
       method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` }, // 👈 ruta protegida
     });
     const updatedTasks = tasks.filter((task) => task.id !== id);
     setTasks(updatedTasks);
@@ -59,7 +76,10 @@ function App() {
 
     const response = await fetch(`http://localhost:3000/tasks/${id}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`, // 👈 ruta protegida
+      },
       body: JSON.stringify({ completed: !task.completed }),
     });
     const updatedTask = await response.json();
@@ -67,47 +87,46 @@ function App() {
     setTasks(tasks.map((t) => (t.id === id ? updatedTask : t)));
   };
 
+  // CERRAR SESIÓN: borra el token guardado y vuelve a la pantalla de login.
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    setToken("");
+    setTasks([]); // limpiamos las tareas en pantalla al salir
+  };
+
   // CONTADORES para el footer (se recalculan en cada render, siempre exactos)
   const completedTasks = tasks.filter((task) => task.completed).length;
   const pendingTasks = tasks.length - completedTasks;
 
+  // AUTH: si NO hay token, mostramos SOLO la pantalla de login/registro.
+  // Recién tras un login exitoso (onLogin guarda el token) se ven las tareas.
+  if (!token) {
+    return (
+      <div className="app-container">
+        <Header />
+        <Auth onLogin={setToken} />
+      </div>
+    );
+  }
+
+  // AUTH: si hay token, mostramos el Task Manager (rutas protegidas) + Cerrar sesión.
   return (
     <div className="app-container">
       <Header />
 
-      {/* Conmutador entre las dos pantallas del proyecto */}
       <nav className="view-switch">
-        <button
-          className={view === "tareas" ? "active" : ""}
-          onClick={() => setView("tareas")}
-        >
-          Tareas
-        </button>
-        <button
-          className={view === "cuenta" ? "active" : ""}
-          onClick={() => setView("cuenta")}
-        >
-          Cuenta
+        <button className="auth-secondary" onClick={handleLogout}>
+          Cerrar sesión
         </button>
       </nav>
 
-      {view === "tareas" ? (
-        <>
-          <TaskInput onAddTask={addTask} />
-          <TaskList
-            tasks={tasks}
-            onDeleteTask={deleteTask}
-            onToggleTask={toggleTask}
-          />
-          <Footer
-            total={tasks.length}
-            completed={completedTasks}
-            pending={pendingTasks}
-          />
-        </>
-      ) : (
-        <Auth />
-      )}
+      <TaskInput onAddTask={addTask} />
+      <TaskList tasks={tasks} onDeleteTask={deleteTask} onToggleTask={toggleTask} />
+      <Footer
+        total={tasks.length}
+        completed={completedTasks}
+        pending={pendingTasks}
+      />
     </div>
   );
 }
