@@ -5,7 +5,7 @@ iniciar sesión y, ya autenticado, crear, listar, editar y eliminar tareas con
 prioridad y estado de completado. Está construida con React + Vite en el frontend y
 una API REST en Express con Prisma y PostgreSQL.
 
-<!-- BADGE_CI -->
+[![CI](https://github.com/sergiovroca/fs-projectManager/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/sergiovroca/fs-projectManager/actions/workflows/ci.yml)
 
 ## 🚀 Instalación local
 
