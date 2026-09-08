@@ -38,5 +38,6 @@ function TaskCard(props: TaskCardProps) {
       </button>
     </li>
   );
+}
 
 export default TaskCard;
