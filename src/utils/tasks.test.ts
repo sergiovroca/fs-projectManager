@@ -16,7 +16,7 @@ describe('contarPendientes', () => {
     // Act
     const resultado = contarPendientes(tasks)
     // Assert
-    expect(resultado).toBe(99)
+    expect(resultado).toBe(2)
   })
 
   it('devuelve 0 cuando la lista esta vacia', () => {
