@@ -5,13 +5,8 @@ import TaskInput from "./components/TaskInput";
 import TaskList from "./components/TaskList";
 import Footer from "./components/Footer";
 import Auth from "./components/Auth";
-
-type Task = {
-  id: number;
-  text: string;
-  priority: string;
-  completed: boolean;
-};
+import { contarCompletadas, contarPendientes } from "./utils/tasks";
+import type { Task } from "./utils/tasks";
 
 function App() {
   // El array de tareas empieza VACÍO: las tareas vienen desde el backend.
@@ -95,8 +90,8 @@ function App() {
   };
 
   // CONTADORES para el footer (se recalculan en cada render, siempre exactos)
-  const completedTasks = tasks.filter((task) => task.completed).length;
-  const pendingTasks = tasks.length - completedTasks;
+  const completedTasks = contarCompletadas(tasks);
+  const pendingTasks = contarPendientes(tasks);
 
   // AUTH: si NO hay token, mostramos SOLO la pantalla de login/registro.
   // Recién tras un login exitoso (onLogin guarda el token) se ven las tareas.

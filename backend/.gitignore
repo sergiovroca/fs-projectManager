@@ -3,3 +3,8 @@ node_modules
 .env
 
 /src/generated/prisma
+# Playwright (reportes y resultados de las pruebas E2E)
+/test-results/
+/playwright-report/
+/playwright/.cache/
+

@@ -34,3 +34,6 @@ dist-ssr
 .env
 .env.*
 !.env.example
+
+# Reporte de cobertura (se regenera con cada ejecucion)
+/coverage/
