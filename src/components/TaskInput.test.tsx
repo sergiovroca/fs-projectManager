@@ -28,4 +28,19 @@ describe('TaskInput', () => {
 
     expect(onAddTask).not.toHaveBeenCalled()
   })
+  it('envia la prioridad elegida en el selector', async () => {
+    const onAddTask = vi.fn()
+    render(<TaskInput onAddTask={onAddTask} />)
+    const usuario = userEvent.setup()
+
+    await usuario.type(
+      screen.getByPlaceholderText('Escribe una nueva tarea'),
+      'Pagar la luz'
+    )
+    // Esto ejecuta el onChange del <select>, la unica linea que faltaba cubrir
+    await usuario.selectOptions(screen.getByRole('combobox'), 'alta')
+    await usuario.click(screen.getByText('Agregar'))
+
+    expect(onAddTask).toHaveBeenCalledWith('Pagar la luz', 'alta')
+  })
 })
