@@ -7,6 +7,39 @@ una API REST en Express con Prisma y PostgreSQL.
 
 [![CI](https://github.com/sergiovroca/fs-projectManager/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/sergiovroca/fs-projectManager/actions/workflows/ci.yml)
 
+## 🐳 Levantar con Docker (recomendado)
+
+Solo necesitas **Docker Desktop** (o Docker Engine + Compose) funcionando. No hace falta
+instalar Node, pnpm ni PostgreSQL.
+
+```bash
+git clone https://github.com/sergiovroca/fs-projectManager.git
+cd fs-projectManager
+
+cp .env.example .env          # en PowerShell: Copy-Item .env.example .env
+docker compose up --build
+```
+
+La primera vez, con los contenedores ya corriendo, aplica las migraciones en otra terminal:
+
+```bash
+docker compose exec backend pnpm exec prisma migrate deploy
+```
+
+Abre **http://localhost:5173**, crea una cuenta con **Registrarse**, inicia sesión y ya
+puedes crear tareas.
+
+| Servicio   | URL / puerto en tu máquina | Dentro de Docker   |
+|------------|----------------------------|--------------------|
+| Frontend   | http://localhost:5173      | nginx, puerto 80   |
+| Backend    | http://localhost:3000      | Express, puerto 4000 |
+| PostgreSQL | localhost:5436             | `postgres:5432`    |
+
+- `docker compose down` detiene todo y **conserva** los datos (volumen `postgres_data`).
+- `docker compose down -v` detiene todo y **borra** la base de datos.
+- Si un puerto está ocupado (`port is already allocated`), cambia el número de la
+  izquierda en `docker-compose.yml`, por ejemplo `"5437:5432"`.
+
 ## 🚀 Instalación local
 
 Requisitos: Node.js 18 o superior, pnpm, y una base de datos PostgreSQL en ejecución.
