@@ -4,7 +4,9 @@ require("dotenv/config");
 // La app vive en app.ts para poder probarla sin levantar el servidor.
 const app = require("./app");
 
-const PORT = 3000;
+// El puerto viene de la variable de entorno PORT (el Dockerfile la fija en 4000).
+// Si no existe, como en desarrollo local, usa 3000.
+const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, ()=>{
     console.log(`Server running on port ${PORT}`);
