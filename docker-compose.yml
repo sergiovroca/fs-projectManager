@@ -1,0 +1,49 @@
+# Levanta la aplicación completa (PostgreSQL + backend + frontend) con un solo comando:
+#   docker compose up --build
+services:
+  postgres:
+    image: postgres:16-alpine
+    # unless-stopped: si lo detienes a mano, no vuelve a arrancar solo al abrir Docker
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: appuser
+      POSTGRES_PASSWORD: apppass
+      POSTGRES_DB: appdb
+    ports:
+      # 5436 en tu PC: 5432-5435 ya están ocupados por otros PostgreSQL
+      - "5436:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U appuser -d appdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    environment:
+      # El host es "postgres" (el nombre del servicio), NUNCA localhost
+      DATABASE_URL: postgresql://appuser:apppass@postgres:5432/appdb
+      # Viene del archivo .env de la raíz (ver .env.example)
+      JWT_SECRET: ${JWT_SECRET}
+    ports:
+      # El backend escucha en el 4000 dentro del contenedor (ENV PORT del Dockerfile),
+      # pero el frontend lo llama en localhost:3000, así que se publica en el 3000.
+      - "3000:4000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    # El frontend está en la raíz del repo, por eso el contexto es "."
+    build: .
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
