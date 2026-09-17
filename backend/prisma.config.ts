@@ -7,6 +7,9 @@ export default defineConfig({
   schema: "prisma/schema.prisma",
   migrations: {
     path: "prisma/migrations",
+    // Prisma 7 ya no lee "prisma.seed" del package.json: el seed se registra aquí.
+    // Sin --respawn, ts-node-dev termina cuando el script acaba (necesario en CI).
+    seed: "ts-node-dev --transpile-only prisma/seed.ts",
   },
   datasource: {
     url: process.env["DATABASE_URL"],

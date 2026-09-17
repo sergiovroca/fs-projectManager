@@ -49,6 +49,99 @@ jobs:
       - run: pnpm install --frozen-lockfile --ignore-scripts
       - run: pnpm run build
 
+  # Laboratorio 1 (Sesión 6): las variables sensibles llegan desde GitHub Secrets.
+  # Sus valores NUNCA se escriben en este archivo, y GitHub los enmascara (***) en los logs.
+  backend-pruebas:
+    name: Backend - Pruebas con variables seguras
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+          cache-dependency-path: backend/pnpm-lock.yaml
+
+      # Falla con un mensaje claro si falta un Secret, sin imprimir nunca su valor
+      - name: Verificar que los Secrets existen
+        run: |
+          for nombre in DATABASE_URL JWT_SECRET; do
+            if [ -z "${!nombre}" ]; then
+              echo "::error::Falta el Secret $nombre (Settings > Secrets and variables > Actions)"
+              exit 1
+            fi
+            echo "OK: $nombre está configurado"
+          done
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec prisma generate
+      - run: pnpm run test
+
+  # Laboratorio 2 (Sesión 6): PostgreSQL efímero + migraciones + seed.
+  # Esta base solo vive durante esta ejecución, en una máquina descartable de GitHub:
+  # por eso sus credenciales pueden ser fijas y de prueba (no son Secrets).
+  migraciones:
+    name: Migraciones y Seeds
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: testpass
+          POSTGRES_DB: testdb
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+    defaults:
+      run:
+        working-directory: ./backend
+    env:
+      DATABASE_URL: postgresql://testuser:testpass@localhost:5432/testdb
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+          cache-dependency-path: backend/pnpm-lock.yaml
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec prisma generate
+      - run: pnpm exec prisma migrate deploy
+
+      # Se corre dos veces a propósito: un seed reproducible no duplica datos
+      - name: Seed (primera corrida)
+        run: pnpm exec prisma db seed
+      - name: Seed (segunda corrida)
+        run: pnpm exec prisma db seed
+
+      - name: Comprobar que el seed no duplicó datos
+        run: |
+          total=$(psql "$DATABASE_URL" -tAc 'SELECT COUNT(*) FROM "Task";')
+          echo "Tareas en la base después de 2 seeds: $total"
+          test "$total" -eq 1
+
   pruebas:
     name: Pruebas unitarias y cobertura
     runs-on: ubuntu-latest

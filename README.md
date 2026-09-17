@@ -123,8 +123,20 @@ PostgreSQL, con el esquema y las migraciones gestionados por **Prisma 7**
 - `migrations/` guarda el historial versionado del esquema:
   - `init` — tabla `Task`
   - `add_user_model` — tabla `User`, para el registro y el login
-- El proyecto aún no incluye seeds: tras aplicar las migraciones la base queda vacía
-  y los primeros datos se crean registrando un usuario desde la aplicación.
+- `seed.ts` carga una tarea de ejemplo. Es reproducible (usa `upsert`): correrlo
+  varias veces no duplica datos. Con Docker:
+  `docker compose exec backend pnpm exec prisma db seed`
+- Las rutas `/tasks` exigen sesión, así que para verlas en la app igual hay que
+  registrar un usuario.
+
+### En el pipeline de CI
+
+- **Migraciones y Seeds**: levanta un PostgreSQL efímero (solo existe durante la
+  ejecución), aplica `prisma migrate deploy` y corre el seed dos veces comprobando
+  que no se duplica nada. Sus credenciales son fijas y de prueba a propósito.
+- **Backend - Pruebas con variables seguras**: recibe `DATABASE_URL` y `JWT_SECRET`
+  desde **GitHub Secrets** (Settings → Secrets and variables → Actions). Si falta
+  alguno, el job falla con un aviso, sin mostrar nunca su valor.
 
 ## 🗂️ Estructura del proyecto
 
