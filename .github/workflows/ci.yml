@@ -5,6 +5,13 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  # Laboratorio 2 (Sesión 7): disparador manual para desplegar a producción.
+  # Se usa desde Actions → CI → "Run workflow".
+  workflow_dispatch:
+    inputs:
+      confirmacion:
+        description: 'Escribe DEPLOY para confirmar el despliegue a produccion'
+        required: true
 
 jobs:
   frontend:
@@ -188,3 +195,36 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 7
+
+  # Laboratorio 1 (Sesión 7): despliegue continuo a staging.
+  # needs: si CUALQUIER check anterior falla, este job no corre (quality gate).
+  # if: solo en un push real a main (después de un merge), nunca en un PR abierto.
+  deploy-staging:
+    name: Deploy a Staging
+    needs: [frontend, backend, backend-pruebas, migraciones, pruebas, e2e]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Instalar Railway CLI
+        run: npm install -g @railway/cli
+      # El Secret RAILWAY_TOKEN es un token de CUENTA (Account Settings → Tokens).
+      # El CLI espera ese tipo de token en RAILWAY_API_TOKEN, y como no hay proyecto
+      # vinculado en la máquina de GitHub, se indica con --project (el ID no es secreto).
+      - name: Desplegar a Railway (staging)
+        run: railway up --service backend --environment staging --project abb2203c-98af-4eef-b836-447c8af91205
+        env:
+          RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+  # Laboratorio 2 (Sesión 7): despliegue a producción SOLO manual, escribiendo DEPLOY.
+  deploy-produccion:
+    name: Deploy a Producción (manual)
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.confirmacion == 'DEPLOY'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm install -g @railway/cli
+      - name: Desplegar a Railway (produccion)
+        run: railway up --service backend --environment production --project abb2203c-98af-4eef-b836-447c8af91205
+        env:
+          RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
