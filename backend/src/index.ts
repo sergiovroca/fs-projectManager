@@ -8,6 +8,8 @@ const app = require("./app");
 // Si no existe, como en desarrollo local, usa 3000.
 const PORT = process.env.PORT || 3000;
 
+throw new Error("fallo simulado");
+
 app.listen(PORT, ()=>{
     console.log(`Server running on port ${PORT}`);
 });
