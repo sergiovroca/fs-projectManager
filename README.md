@@ -40,6 +40,23 @@ puedes crear tareas.
 - Si un puerto está ocupado (`port is already allocated`), cambia el número de la
   izquierda en `docker-compose.yml`, por ejemplo `"5437:5432"`.
 
+## 🚂 Despliegue (Railway)
+
+El backend se despliega en [Railway](https://railway.com) desde el pipeline de CI, con
+dos ambientes separados, cada uno con su propia base de datos y variables:
+
+| Ambiente     | Cuándo se despliega                                                  |
+|--------------|----------------------------------------------------------------------|
+| `staging`    | Automático tras cada merge a `main`, solo si todos los checks pasan   |
+| `production` | Manual: Actions → CI → **Run workflow** escribiendo `DEPLOY`          |
+
+- El pipeline usa el Secret `RAILWAY_TOKEN` (token de cuenta de Railway).
+- El servicio `backend` usa **Root Directory** `/backend`, porque el Dockerfile de la
+  raíz es el del frontend.
+- Variables del servicio: `DATABASE_URL=${{Postgres.DATABASE_URL}}`, `JWT_SECRET`
+  (distinto en cada ambiente) y `PORT=4000`.
+- Healthcheck: `GET /health` responde `{"status":"ok"}`.
+
 ## 🚀 Instalación local
 
 Requisitos: Node.js 18 o superior, pnpm, y una base de datos PostgreSQL en ejecución.

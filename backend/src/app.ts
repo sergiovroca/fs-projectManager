@@ -24,6 +24,12 @@ app.get("/", (req: any, res:any)=>{
     res.send("Backend is working!");
 });
 
+// HEALTHCHECK: Railway consulta esta ruta después de cada despliegue.
+// Si responde 200, el despliegue queda activo; si no, lo marca como fallido.
+app.get("/health", (req: any, res: any) => {
+    res.status(200).json({ status: "ok" });
+});
+
 // AUTH: /register crea un usuario REAL en PostgreSQL.
 // AUTH: la contraseña se guarda hasheada (con bcrypt), nunca en texto plano.
 app.post("/register", async (req: any, res: any) => {
