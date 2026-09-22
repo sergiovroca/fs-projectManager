@@ -171,6 +171,9 @@ jobs:
   e2e:
     name: Pruebas E2E
     runs-on: ubuntu-latest
+    # Red de seguridad: si el navegador o el servidor de pruebas se cuelgan,
+    # el job falla en 15 minutos en vez de quedarse hasta el limite de 6 horas.
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 
