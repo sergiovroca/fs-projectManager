@@ -38,6 +38,15 @@ describe("GET /health", () => {
     const res = await request(app).get("/health");
 
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({ status: "ok" });
+    expect(res.body.status).toBe("ok");
+  });
+
+  // Sesion 8: el healthcheck tambien informa version y tiempo activo.
+  it("informa la version desplegada y los segundos activos", async () => {
+    const res = await request(app).get("/health");
+
+    expect(typeof res.body.version).toBe("string");
+    expect(typeof res.body.uptime).toBe("number");
+    expect(res.body.uptime).toBeGreaterThanOrEqual(0);
   });
 });

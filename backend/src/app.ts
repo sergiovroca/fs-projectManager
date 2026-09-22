@@ -26,8 +26,18 @@ app.get("/", (req: any, res:any)=>{
 
 // HEALTHCHECK: Railway consulta esta ruta después de cada despliegue.
 // Si responde 200, el despliegue queda activo; si no, lo marca como fallido.
+//
+// Sesión 8: además del estado, la ruta informa qué versión quedó desplegada y
+// cuántos segundos lleva vivo el proceso. Así, al abrir /health en staging se
+// ve de un vistazo si el último despliegue realmente reemplazó al anterior.
+const APP_VERSION = process.env.APP_VERSION || "1.1.0";
+
 app.get("/health", (req: any, res: any) => {
-    res.status(200).json({ status: "ok" });
+    res.status(200).json({
+        status: "ok",
+        version: APP_VERSION,
+        uptime: Math.floor(process.uptime()),
+    });
 });
 
 // AUTH: /register crea un usuario REAL en PostgreSQL.
