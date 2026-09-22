@@ -35,5 +35,9 @@ dist-ssr
 .env.*
 !.env.example
 
-# Reporte de cobertura (se regenera con cada ejecucion)
+# Reportes y artefactos de pruebas: se regeneran en cada ejecucion y no
+# aportan historial. El reporte de Playwright del pipeline queda disponible
+# como artifact del job de E2E en Actions, que es donde tiene sentido buscarlo.
 /coverage/
+/playwright-report/
+/test-results/
