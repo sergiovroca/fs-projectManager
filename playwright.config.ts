@@ -23,10 +23,10 @@ export default defineConfig({
     reuseExistingServer: !enCI,
     timeout: 120_000,
 
-    // stdout: 'ignore' es lo que destraba el job. Con la salida del servidor
-    // conectada al step, el proceso de Vite mantiene abierta la tuberia y el
-    // step nunca termina, aunque las pruebas ya hayan pasado.
+    // Las DOS salidas del servidor van a 'ignore'. Con cualquiera de las dos
+    // conectada al step, el proceso de Vite mantiene abierta esa tuberia y el
+    // step nunca termina, aunque las pruebas ya hayan pasado en milisegundos.
     stdout: 'ignore',
-    stderr: 'pipe',
+    stderr: 'ignore',
   },
 })
