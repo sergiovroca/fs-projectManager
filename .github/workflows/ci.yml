@@ -171,6 +171,9 @@ jobs:
   e2e:
     name: Pruebas E2E
     runs-on: ubuntu-latest
+    # Red de seguridad: si el navegador o el servidor de pruebas se cuelgan,
+    # el job falla en 15 minutos en vez de quedarse hasta el limite de 6 horas.
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 
@@ -186,6 +189,24 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install --with-deps chromium
+
+      # El frontend se levanta aqui, en segundo plano y con la salida redirigida
+      # a un archivo. Si lo levantara Playwright, el step no terminaria hasta que
+      # ese proceso cerrara sus tuberias, aunque las pruebas ya hubieran pasado.
+      - name: Levantar el frontend en segundo plano
+        run: |
+          nohup pnpm exec vite --port 5173 --strictPort > /tmp/vite.log 2>&1 &
+          for intento in $(seq 1 60); do
+            if curl -sf http://localhost:5173 > /dev/null; then
+              echo "Frontend respondiendo en http://localhost:5173"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "::error::El frontend no respondio en 60 segundos"
+          cat /tmp/vite.log
+          exit 1
+
       - run: pnpm exec playwright test
 
       # Guarda el reporte HTML aunque la prueba falle, para poder revisarlo

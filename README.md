@@ -55,7 +55,9 @@ dos ambientes separados, cada uno con su propia base de datos y variables:
   raíz es el del frontend.
 - Variables del servicio: `DATABASE_URL=${{Postgres.DATABASE_URL}}`, `JWT_SECRET`
   (distinto en cada ambiente) y `PORT=4000`.
-- Healthcheck: `GET /health` responde `{"status":"ok"}`.
+- Healthcheck: `GET /health` responde `{"status":"ok","version":"1.1.0","uptime":<segundos>}`.
+  Los campos `version` y `uptime` permiten confirmar, desde el navegador, que el
+  ambiente está sirviendo el último despliegue y no una versión anterior.
 
 ## 🚀 Instalación local
 
